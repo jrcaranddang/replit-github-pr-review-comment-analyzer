@@ -19,7 +19,9 @@ export default function Analyze() {
         `/api/repos/${owner}/${repo}/pulls`,
         undefined,
       );
-      return res.json();
+      const data = await res.json();
+      console.log('Pull requests data:', data); // Add logging
+      return data;
     },
   });
 
