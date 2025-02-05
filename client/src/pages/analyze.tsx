@@ -5,6 +5,7 @@ import { PrList } from "@/components/pr-list";
 import { AnalysisChart } from "@/components/analysis-chart";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { PullRequest } from "@shared/schema";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function Analyze() {
   const { owner, repo } = useParams();
@@ -12,8 +13,13 @@ export default function Analyze() {
   const { data: prs, isLoading } = useQuery<PullRequest[]>({
     queryKey: [`/api/repos/${owner}/${repo}/pulls`],
     enabled: Boolean(owner && repo),
-    headers: {
-      Authorization: `Bearer demo-token`, // In demo mode, use a dummy token
+    queryFn: async () => {
+      const res = await apiRequest(
+        "GET",
+        `/api/repos/${owner}/${repo}/pulls`,
+        undefined,
+      );
+      return res.json();
     },
   });
 

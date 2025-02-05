@@ -9,8 +9,9 @@ interface AnalysisChartProps {
 export function AnalysisChart({ prs }: AnalysisChartProps) {
   const data = prs.map(pr => ({
     name: `#${pr.githubPrId}`,
-    approvals: pr.analysisResult?.approvals || 0,
-    changes: pr.analysisResult?.changes || 0,
+    approvals: pr.analysisResult?.approvals ?? 0,
+    changes: pr.analysisResult?.changes ?? 0,
+    sentiment: pr.analysisResult?.sentiment ?? 0,
   }));
 
   return (
@@ -18,8 +19,8 @@ export function AnalysisChart({ prs }: AnalysisChartProps) {
       <CardHeader>
         <CardTitle className="text-[#24292E]">Review Analysis</CardTitle>
       </CardHeader>
-      <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
+      <CardContent className="h-[300px]">
+        <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data}>
             <XAxis dataKey="name" />
             <YAxis />
