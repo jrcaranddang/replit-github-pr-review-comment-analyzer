@@ -7,14 +7,14 @@ interface AnalysisChartProps {
 }
 
 export function AnalysisChart({ prs }: AnalysisChartProps) {
-  console.log('Chart data before transform:', prs); // Add logging
+  console.log('Chart data before transform:', prs);
   const data = prs.map(pr => ({
     name: `#${pr.githubPrId}`,
     approvals: pr.analysisResult?.approvals ?? 0,
     changes: pr.analysisResult?.changes ?? 0,
-    sentiment: pr.analysisResult?.sentiment ?? 0,
+    sentiment: Math.round((pr.analysisResult?.sentiment ?? 0) * 100) / 100,
   }));
-  console.log('Chart data after transform:', data); // Add logging
+  console.log('Chart data after transform:', data);
 
   if (data.length === 0) {
     return (

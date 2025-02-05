@@ -14,13 +14,17 @@ export default function Analyze() {
     queryKey: [`/api/repos/${owner}/${repo}/pulls`],
     enabled: Boolean(owner && repo),
     queryFn: async () => {
-      const res = await apiRequest(
-        "GET",
-        `/api/repos/${owner}/${repo}/pulls`,
-        undefined,
-      );
+      const res = await fetch(`/api/repos/${owner}/${repo}/pulls`, {
+        headers: {
+          'Authorization': 'Bearer demo-token',
+        },
+        credentials: 'include'
+      });
+      if (!res.ok) {
+        throw new Error('Failed to fetch pull requests');
+      }
       const data = await res.json();
-      console.log('Pull requests data:', data); // Add logging
+      console.log('Pull requests data:', data);
       return data;
     },
   });
