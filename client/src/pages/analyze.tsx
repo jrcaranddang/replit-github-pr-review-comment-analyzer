@@ -4,13 +4,17 @@ import { RepositorySelect } from "@/components/repository-select";
 import { PrList } from "@/components/pr-list";
 import { AnalysisChart } from "@/components/analysis-chart";
 import { Skeleton } from "@/components/ui/skeleton";
+import type { PullRequest } from "@shared/schema";
 
 export default function Analyze() {
   const { owner, repo } = useParams();
-  
-  const { data: prs, isLoading } = useQuery({
-    queryKey: ["/api/repos", owner, repo, "pulls"],
+
+  const { data: prs, isLoading } = useQuery<PullRequest[]>({
+    queryKey: [`/api/repos/${owner}/${repo}/pulls`],
     enabled: Boolean(owner && repo),
+    headers: {
+      Authorization: `Bearer demo-token`, // In demo mode, use a dummy token
+    },
   });
 
   return (

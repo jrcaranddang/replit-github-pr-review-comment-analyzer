@@ -3,18 +3,33 @@ import { Button } from "@/components/ui/button";
 import { GithubIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function Home() {
   const { toast } = useToast();
   const [_, setLocation] = useLocation();
 
   const handleLogin = async () => {
-    // In a real app, this would redirect to GitHub OAuth
-    toast({
-      title: "Demo Mode",
-      description: "Redirecting to analysis page",
-    });
-    setLocation("/analyze/facebook/react");
+    try {
+      // Simulate GitHub login in demo mode
+      await apiRequest("POST", "/api/auth/github", {
+        githubId: "demo-user",
+        username: "demo",
+        accessToken: "demo-token",
+      });
+
+      toast({
+        title: "Demo Mode",
+        description: "Redirecting to analysis page",
+      });
+      setLocation("/analyze/facebook/react");
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to login. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
