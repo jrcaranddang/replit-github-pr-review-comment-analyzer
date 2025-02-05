@@ -1,4 +1,6 @@
-import { User, InsertUser, PullRequest, InsertPullRequest } from "@shared/schema";
+import { User, InsertUser, PullRequest, InsertPullRequest, users, pullRequests } from "@shared/schema";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
@@ -9,60 +11,44 @@ export interface IStorage {
   updatePullRequestAnalysis(id: number, analysis: PullRequest["analysisResult"]): Promise<PullRequest>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private pullRequests: Map<number, PullRequest>;
-  private currentUserId: number;
-  private currentPrId: number;
-
-  constructor() {
-    this.users = new Map();
-    this.pullRequests = new Map();
-    this.currentUserId = 1;
-    this.currentPrId = 1;
-  }
-
+export class DatabaseStorage implements IStorage {
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
   }
 
   async getUserByGithubId(githubId: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.githubId === githubId,
-    );
+    const [user] = await db.select().from(users).where(eq(users.githubId, githubId));
+    return user;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.currentUserId++;
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
+    const [user] = await db.insert(users).values(insertUser).returning();
     return user;
   }
 
   async getPullRequests(repository: string): Promise<PullRequest[]> {
-    return Array.from(this.pullRequests.values()).filter(
-      (pr) => pr.repository === repository
-    );
+    return db.select().from(pullRequests).where(eq(pullRequests.repository, repository));
   }
 
   async createPullRequest(insertPr: InsertPullRequest): Promise<PullRequest> {
-    const id = this.currentPrId++;
-    const pr: PullRequest = { ...insertPr, id };
-    this.pullRequests.set(id, pr);
+    const [pr] = await db.insert(pullRequests).values(insertPr).returning();
     return pr;
   }
 
   async updatePullRequestAnalysis(
-    id: number,
+    id: number, 
     analysis: PullRequest["analysisResult"]
   ): Promise<PullRequest> {
-    const pr = this.pullRequests.get(id);
+    const [pr] = await db
+      .update(pullRequests)
+      .set({ analysisResult: analysis })
+      .where(eq(pullRequests.id, id))
+      .returning();
+
     if (!pr) throw new Error("PR not found");
-    
-    const updated = { ...pr, analysisResult: analysis };
-    this.pullRequests.set(id, updated);
-    return updated;
+    return pr;
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
