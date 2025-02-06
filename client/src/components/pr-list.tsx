@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, XCircle, Smile } from "lucide-react";
+import { CheckCircle, XCircle, Smile, MessageSquare } from "lucide-react";
 import type { PullRequest } from "@shared/schema";
 
 interface PrListProps {
@@ -48,6 +48,35 @@ export function PrList({ prs }: PrListProps) {
                   <p>{pr.analysisResult?.changes || 0}</p>
                 </div>
               </div>
+
+              {/* ML Analysis Section */}
+              {pr.analysisResult?.mlAnalysis && (
+                <div className="mt-4 border-t pt-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <MessageSquare className="h-4 w-4" />
+                    <p className="font-medium">Comment Analysis</p>
+                  </div>
+                  <div className="space-y-2">
+                    <p>
+                      Sentiment: {Math.round(pr.analysisResult.mlAnalysis.overallSentiment * 100)}%
+                    </p>
+                    <div>
+                      <p className="font-medium text-xs uppercase text-gray-500 mb-1">
+                        Common Topics
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {pr.analysisResult.mlAnalysis.topKeywords.map((keyword) => (
+                          <Badge key={keyword} variant="outline" className="text-xs">
+                            {keyword}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Emoji Analysis Section */}
               {pr.analysisResult?.emojiAnalysis && (
                 <div className="mt-4 border-t pt-4">
                   <div className="flex items-center gap-2">

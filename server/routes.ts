@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { Octokit } from "@octokit/rest";
 import { insertUserSchema, insertPullRequestSchema } from "@shared/schema";
 import { analyzeEmojis } from "../shared/emoji-analysis";
+import { analyzeComments } from "../shared/ml-analysis"; // Assuming this function exists
 
 export function registerRoutes(app: Express): Server {
   app.post("/api/auth/github", async (req, res) => {
@@ -23,7 +24,7 @@ export function registerRoutes(app: Express): Server {
     const { labels } = req.query;
     const accessToken = req.headers.authorization?.split(" ")[1];
 
-    // In demo mode, return mock data with emoji analysis
+    // In demo mode, return mock data with emoji analysis and ML analysis
     if (accessToken === 'demo-token') {
       const mockPRs = [
         {
@@ -46,6 +47,15 @@ export function registerRoutes(app: Express): Server {
                 { emoji: "🎉", count: 1 },
                 { emoji: "✨", count: 1 }
               ]
+            },
+            mlAnalysis: {
+              overallSentiment: 0.85,
+              categoryDistribution: {
+                approval: 2,
+                praise: 2,
+                suggestion: 1
+              },
+              topKeywords: ["great", "implementation", "feature", "clean", "approved"]
             }
           },
         },
@@ -68,13 +78,21 @@ export function registerRoutes(app: Express): Server {
                 { emoji: "🤔", count: 2 },
                 { emoji: "👎", count: 1 }
               ]
+            },
+            mlAnalysis: {
+              overallSentiment: -0.2,
+              categoryDistribution: {
+                concern: 2,
+                question: 1
+              },
+              topKeywords: ["issue", "problem", "review", "needs", "work"]
             }
           },
         },
       ];
 
       const prs = await Promise.all(
-        mockPRs.map(prData => 
+        mockPRs.map(prData =>
           storage.createPullRequest(insertPullRequestSchema.parse(prData))
         )
       );
@@ -112,13 +130,16 @@ export function registerRoutes(app: Express): Server {
             }),
           ]);
 
-          // Combine all comment texts for emoji analysis
+          // Combine all comment texts for emoji analysis and ML analysis
           const allComments = [
             ...reviews.data.map(r => r.body || ""),
             ...comments.data.map(c => c.body || "")
-          ].join("\n");
+          ];
 
-          const emojiAnalysis = analyzeEmojis(allComments);
+          const [emojiAnalysis, mlAnalysis] = await Promise.all([
+            analyzeEmojis(allComments.join("\n")),
+            analyzeComments(allComments.join("\n")) //Added join here
+          ]);
 
           const prData = {
             githubPrId: pull.number,
@@ -128,11 +149,16 @@ export function registerRoutes(app: Express): Server {
             labels: pull.labels.map(l => l.name || ""),
             commentCount: comments.data.length + reviews.data.length,
             analysisResult: {
-              sentiment: Math.min(Math.max(emojiAnalysis.score, -1), 1), // Normalize between -1 and 1
+              sentiment: Math.min(Math.max(mlAnalysis.overallSentiment, -1), 1),
               approvals: reviews.data.filter(c => c.state === "APPROVED").length,
               changes: reviews.data.filter(c => c.state === "CHANGES_REQUESTED").length,
               canMerge: reviews.data.some(c => c.state === "APPROVED"),
               emojiAnalysis,
+              mlAnalysis: {
+                overallSentiment: mlAnalysis.overallSentiment,
+                categoryDistribution: mlAnalysis.categoryDistribution,
+                topKeywords: mlAnalysis.topKeywords
+              }
             },
           };
 

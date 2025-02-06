@@ -27,6 +27,11 @@ export const pullRequests = pgTable("pull_requests", {
       emojiCount: number;
       topEmojis: Array<{ emoji: string; count: number }>;
     };
+    mlAnalysis?: {
+      overallSentiment: number;
+      categoryDistribution: Record<string, number>;
+      topKeywords: string[];
+    };
   }>(),
 });
 
