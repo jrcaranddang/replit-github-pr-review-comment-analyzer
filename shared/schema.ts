@@ -22,6 +22,11 @@ export const pullRequests = pgTable("pull_requests", {
     approvals: number;
     changes: number;
     canMerge: boolean;
+    emojiAnalysis?: {
+      score: number;
+      emojiCount: number;
+      topEmojis: Array<{ emoji: string; count: number }>;
+    };
   }>(),
 });
 

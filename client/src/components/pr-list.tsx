@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, XCircle } from "lucide-react";
+import { CheckCircle, XCircle, Smile } from "lucide-react";
 import type { PullRequest } from "@shared/schema";
 
 interface PrListProps {
@@ -48,6 +48,26 @@ export function PrList({ prs }: PrListProps) {
                   <p>{pr.analysisResult?.changes || 0}</p>
                 </div>
               </div>
+              {pr.analysisResult?.emojiAnalysis && (
+                <div className="mt-4 border-t pt-4">
+                  <div className="flex items-center gap-2">
+                    <Smile className="h-4 w-4" />
+                    <p className="font-medium">Emoji Sentiment</p>
+                  </div>
+                  <div className="mt-2">
+                    <p className="text-sm">
+                      Score: {Math.round(pr.analysisResult.emojiAnalysis.score * 100)}%
+                    </p>
+                    <div className="flex gap-2 mt-1">
+                      {pr.analysisResult.emojiAnalysis.topEmojis.map(({ emoji, count }) => (
+                        <Badge key={emoji} variant="outline">
+                          {emoji} × {count}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
